@@ -11,7 +11,9 @@ import sys
 import csv
 import utils
 
-img_root = './images/'
+config = utils.config
+data_root = config['data']
+img_root = data_root + 'images/'
 
 class DataSet(data.Dataset):
 

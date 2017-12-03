@@ -1,4 +1,5 @@
 {
+	"data": "./data/leaf/",
 	"train": "train_.csv",
 	"eval": "val_.csv",
 	"test": "test.csv",

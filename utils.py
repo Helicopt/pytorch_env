@@ -1,10 +1,13 @@
 import csv
 import random
+import json
 
 specy = {}
 specy_inv = {}
 
-train_data = './train.csv'
+config = json.load(open('config.json'))
+data_root = config['data']
+train_data = data_root + 'train.csv'
 
 def deal():
 	a = csv.DictReader(open(train_data))
@@ -44,10 +47,10 @@ if __name__=='__main__':
 		else:
 			t['train'] += 1
 			train_.append(i)
-	b = csv.DictWriter(open('train_.csv','w'), a.fieldnames)
+	b = csv.DictWriter(open(data_root+'train_.csv','w'), a.fieldnames)
 	b.writeheader()
 	b.writerows(train_)
-	b = csv.DictWriter(open('val_.csv','w'), a.fieldnames)
+	b = csv.DictWriter(open(data_root+'val_.csv','w'), a.fieldnames)
 	b.writeheader()
 	b.writerows(val_)
 

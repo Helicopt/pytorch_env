@@ -7,6 +7,9 @@ import sys
 from math import *
 from qimage2ndarray import *
 import random
+import utils
+
+data_root = utils.config['data']
 
 def randColor(i):
 	# return (random.randint(0,255),random.randint(0,255),random.randint(0,255))
@@ -80,12 +83,12 @@ class VPanel(QWidget):
 	def draw(self):
 		self.disButton.setText('%d/%d'%(self.ind, len(self.data)))
 		d = self.data[self.ind]
-		im = cv2.imread('images/%s.jpg'%d[0])
+		im = cv2.imread(data_root + 'images/%s.jpg'%d[0])
 		im = getQImg(im)
 		self.imgLabel.setPixmap(im)
 		self.label.setText('predict [%s], prob: %.4f'%(d[1], float(d[2])))
 		for i in range(3):
-			im = cv2.imread('images/%s.jpg'%self.mp[d[1]][i])
+			im = cv2.imread(data_root + 'images/%s.jpg'%self.mp[d[1]][i])
 			im = getQImg(im, (300,300))
 			self.cps[i].setPixmap(im)
 
@@ -130,7 +133,7 @@ class VPanel(QWidget):
 					nm = k
 			data.append((i['id'], nm, mx))
 		self.data = data
-		b = csv.DictReader(open('train.csv'))
+		b = csv.DictReader(open(data_root + 'train.csv'))
 		mp = {}
 		for i in b:
 			nm = i['species']

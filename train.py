@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -27,9 +28,10 @@ parser.add_argument('-p', '--param', type=str, default='', help='params to load 
 	______
 '''
 config = json.load(open('config.json'))
-train_ = config['train']
-val_ = config['eval']
-test_ = config['test']
+data_root = config['data']
+train_ = data_root+config['train']
+val_ = data_root+config['eval']
+test_ = data_root+config['test']
 snapshot_dir = config['snapshot']
 base_lr = config['base_lr']
 lr_decay = config['lr_decay']
@@ -37,7 +39,8 @@ decay_step = config['decay_step']
 max_epoch = config['max_epoch']
 result_file = config['result']
 dispStep = 10
-gpu_num = torch.cuda.device_count()
+use_cpu = torch.cuda.device_count()<=0
+gpu_num = max(1, torch.cuda.device_count())
 
 '''
 	config ends
@@ -46,10 +49,11 @@ gpu_num = torch.cuda.device_count()
 
 global Net
 Net = mNet()
-Net.cuda()
+if use_cpu==False: Net.cuda()
 global eval_set, train_set, test_set
 
 def Vari(x):
+	if use_cpu:	return Var(x)
 	return Var(x.cuda())
 
 def mark(x, y):
@@ -76,7 +80,7 @@ def do_eval(w = None, p = {}):
 			print 'eval load model %s' % w
 		Net.eval()
 	global eval_set
-	dataLoader = data.DataLoader(dataset = eval_set, shuffle = False, num_workers = 8, batch_size = 16 * gpu_num, pin_memory = True)
+	dataLoader = data.DataLoader(dataset = eval_set, shuffle = False, num_workers = 8, batch_size = 16 * gpu_num, pin_memory = not use_cpu)
 	tot = 0
 	acc = 0.
 	clsn = 99
@@ -143,7 +147,7 @@ def do_train(w = None, p = {}):
 			pg['lr'] = lr
 		print '\n','-'*16
 		print 'epoch [%d] init done, lr = %.6f'%(epoch,lr)
-		dataLoader = data.DataLoader(dataset = train_set, shuffle = False, num_workers = 8, batch_size = 16 * gpu_num, pin_memory = True)
+		dataLoader = data.DataLoader(dataset = train_set, shuffle = False, num_workers = 8, batch_size = 16 * gpu_num, pin_memory = not use_cpu)
 		for batchid, (_, x, y, z) in enumerate(dataLoader):
 			bsz = x.size(0)
 			opti.zero_grad()
@@ -191,9 +195,9 @@ def do_test(w, p = {}):
 		print 'test load model %s' % w
 	global test_set
 	Net.eval()
-	dataLoader = data.DataLoader(dataset = test_set, shuffle = False, num_workers = 8, batch_size = 16 * gpu_num, pin_memory = True)
+	dataLoader = data.DataLoader(dataset = test_set, shuffle = False, num_workers = 8, batch_size = 16 * gpu_num, pin_memory = not use_cpu)
 
-	a = csv.DictReader(open('sample_submission.csv'))
+	a = csv.DictReader(open(data_root+'sample_submission.csv'))
 	b = csv.DictWriter(open('test_output.csv', 'w'), a.fieldnames)
 	res = []
 	for batchid, (sid, x, y) in enumerate(dataLoader):
@@ -217,6 +221,8 @@ def do_test(w, p = {}):
 
 if __name__=='__main__':
 	global eval_set, train_set, test_set
+	if use_cpu:	print 'USING CPU ONLY'
+	else: print 'USING %d GPU'%gpu_num
 	args = parser.parse_args()
 	if args.param!='':
 		p = json.load(open(args.param))
