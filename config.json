@@ -1,0 +1,13 @@
+{
+	"train": "train_.csv",
+	"eval": "val_.csv",
+	"test": "test.csv",
+	
+	"snapshot": "./snapshot/",
+	"base_lr": 0.01,
+	"lr_decay": 0.1,
+	"decay_step": 20,
+	"max_epoch": 160,
+
+	"result": "report.json"
+}
