@@ -230,12 +230,12 @@ if __name__=='__main__':
 		p = {}
 	if args.type=='train':
 		train_set = DataSet(train_)
-		eval_set = DataSet(val_)
+		eval_set = DataSet(val_, train = False)
 		do_train(args.load, p)
 	elif args.type=='eval':
-		eval_set = DataSet(val_)
+		eval_set = DataSet(val_, train = False)
 		do_eval(args.load, p)
 	else:
-		test_set = DataSet(test_)
+		test_set = DataSet(test_, train = False)
 		do_test(args.load, p)
 	

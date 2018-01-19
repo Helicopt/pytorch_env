@@ -17,7 +17,7 @@ img_root = data_root + 'images/'
 
 class DataSet(data.Dataset):
 
-	def __init__(self, csvFile):
+	def __init__(self, csvFile, train = True):
 		super(DataSet, self).__init__()
 		self.csv = csv.DictReader(open(csvFile))
 		self.fields = sorted(self.csv.fieldnames)
@@ -31,7 +31,14 @@ class DataSet(data.Dataset):
 			im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 			im = im.astype('float32')
 			im = cv2.resize(im, (224,224))
-			im = im.reshape(1, 224,224)
+			if train:
+				ims = utils.dataAuc(im)
+			else:
+				ims = [im]
+			imgs = []
+			for im in ims:
+				im = im.reshape(1, 224,224)
+				imgs.append(im)
 			u = []
 			for i in self.fields:
 				if i=='species' or i=='id': continue
@@ -39,9 +46,11 @@ class DataSet(data.Dataset):
 			u = np.array(u, dtype='float32')
 			sid = np.array([sid], dtype='int')
 			if la is None:
-				self.data.append((sid, im, u))
+				for im in imgs:
+					self.data.append((sid, im, u))
 			else:
-				self.data.append((sid, im, u, np.array([la], dtype='int')))
+				for im in imgs:
+					self.data.append((sid, im, u, np.array([la], dtype='int')))
 		self.n = len(self.data)
 
 	def shuffle(self):

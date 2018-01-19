@@ -1,6 +1,7 @@
 import csv
 import random
 import json
+import cv2
 
 specy = {}
 specy_inv = {}
@@ -27,6 +28,20 @@ def name2clsid(x):
 def clsid2name(x):
 	if x in specy_inv: return specy_inv[x]
 	else: return ''
+
+def dataAuc(im):
+	w, h = im.shape[2::-1]
+	cx, cy = w/2, h/2
+	angles = [0, 30,60,90,120,150,180,-30,-60,-90,-120,-150]
+	M = []
+	for i in angles:
+		M.append(cv2.getRotationMatrix2D((cx, cy), i, 1.0))
+	ims = []
+	for m in M:
+		tmp = cv2.warpAffine(im, m, (w,h))
+		ims.append(tmp)
+		ims.append(cv2.flip(tmp,0))
+	return ims
 
 if __name__=='__main__':
 	a = csv.DictReader(open(train_data))
