@@ -138,10 +138,10 @@ def do_train(w = None, p = {}):
 	opti = optim.SGD(bp_params, lr = base_lr, momentum = 0.9)
 	loss_function = nn.NLLLoss()
 	Net.train()
-	avg_loss = 0.
-	bcnt = 0
 	for epoch in range(start, max_epoch):
 		train_set.shuffle()
+		avg_loss = 0.
+		bcnt = 0
 		lr = base_lr * (1. - lr_decay) **(epoch//decay_step)
 		for pg in opti.param_groups:
 			pg['lr'] = lr
