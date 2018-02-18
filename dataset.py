@@ -19,10 +19,10 @@ class DataSet(data.Dataset):
 
 	def __init__(self, csvFile, train = True):
 		super(DataSet, self).__init__()
-		self.csv = csv.DictReader(open(csvFile))
-		self.fields = sorted(self.csv.fieldnames)
+		mcsv = csv.DictReader(open(csvFile))
+		fields = sorted(mcsv.fieldnames)
 		self.data = []
-		for it in self.csv:
+		for it in mcsv:
 			la = None
 			if 'species' in it:
 				la = utils.name2clsid(it['species'])
@@ -40,7 +40,7 @@ class DataSet(data.Dataset):
 				im = im.reshape(1, 224,224)
 				imgs.append(im)
 			u = []
-			for i in self.fields:
+			for i in fields:
 				if i=='species' or i=='id': continue
 				u.append(it[i])
 			u = np.array(u, dtype='float32')
@@ -52,6 +52,7 @@ class DataSet(data.Dataset):
 				for im in imgs:
 					self.data.append((sid, im, u, np.array([la], dtype='int')))
 		self.n = len(self.data)
+		print(csvFile, self.n, 'samples')
 
 	def shuffle(self):
 		random.shuffle(self.data)
@@ -60,5 +61,4 @@ class DataSet(data.Dataset):
 		return self.n
 	
 	def __getitem__(self, ind):
-		# print self.data[ind][0].dtype, self.data[ind][1].dtype, self.data[ind][2].dtype
 		return self.data[ind]

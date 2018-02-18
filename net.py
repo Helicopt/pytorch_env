@@ -33,7 +33,7 @@ class mNet(nn.Module):
 		self.fc2 = nn.Linear(400, 256)
 		self.fc3 = nn.Linear(256, 99)
 
-		self.sm = nn.LogSoftmax()
+		self.sm = nn.LogSoftmax(dim=1)
 
 	def forward(self, x, y):
 		n = x.size(0)
@@ -69,4 +69,4 @@ class mNet(nn.Module):
 
 if __name__=='__main__':
 	net = mNet()
-	print net
+	print(net)

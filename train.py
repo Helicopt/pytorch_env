@@ -38,7 +38,8 @@ lr_decay = config['lr_decay']
 decay_step = config['decay_step']
 max_epoch = config['max_epoch']
 result_file = config['result']
-dispStep = 10
+dispStep = 5
+default_workers = 2
 use_cpu = torch.cuda.device_count()<=0
 gpu_num = max(1, torch.cuda.device_count())
 
@@ -74,13 +75,13 @@ def do_eval(w = None, p = {}):
 	if w is not None:
 		if w.isdigit():
 			Net.load(snapshot_dir+'__iter%d.pkl'%int(w))
-			print 'eval load model  __iter%d.pkl'%int(w)
+			print('eval load model  __iter%d.pkl'%int(w))
 		else:
 			Net.load(w)
-			print 'eval load model %s' % w
+			print('eval load model %s' % w)
 		Net.eval()
 	global eval_set
-	dataLoader = data.DataLoader(dataset = eval_set, shuffle = False, num_workers = 8, batch_size = 16 * gpu_num, pin_memory = not use_cpu)
+	dataLoader = data.DataLoader(dataset = eval_set, shuffle = False, num_workers = default_workers, batch_size = 16 * gpu_num, pin_memory = not use_cpu)
 	tot = 0
 	acc = 0.
 	clsn = 99
@@ -101,10 +102,10 @@ def do_eval(w = None, p = {}):
 			if mtot[i]>0.5:
 				mAP += macc[i]/mtot[i]
 	for i in range(clsn):
-		print '(%d: %d / %d) '%(i, macc[i], mtot[i]), 
-	print ''
-	print 'all %d input, %d correct' %(tot, acc)
-	print 'accuracy: %.3f %%, mAP: %.3f %%'%(acc*100./tot, mAP*100./clsn)
+		print('(%d: %d / %d) '%(i, macc[i], mtot[i]), end = '')
+	print('')
+	print('all %d input, %d correct' %(tot, acc))
+	print('accuracy: %.3f %%, mAP: %.3f %%'%(acc*100./tot, mAP*100./clsn))
 	return acc/tot, mAP/clsn
 
 def report():
@@ -129,10 +130,10 @@ def do_train(w = None, p = {}):
 	elif w.isdigit():
 		start = int(w)
 		Net.load(snapshot_dir+'__iter%d.pkl'%start)
-		print 'train resume from iter %d' %start
+		print('train resume from iter %d' %start)
 	else:
 		Net.load(w)
-		print 'pretrain load model %s' % w
+		print('pretrain load model %s' % w)
 	global train_set
 	bp_params = filter(lambda x: x.requires_grad, Net.parameters())
 	opti = optim.SGD(bp_params, lr = base_lr, momentum = 0.9)
@@ -145,13 +146,13 @@ def do_train(w = None, p = {}):
 		lr = base_lr * (1. - lr_decay) **(epoch//decay_step)
 		for pg in opti.param_groups:
 			pg['lr'] = lr
-		print '\n','-'*16
-		print 'epoch [%d] init done, lr = %.6f'%(epoch,lr)
-		dataLoader = data.DataLoader(dataset = train_set, shuffle = False, num_workers = 8, batch_size = 16 * gpu_num, pin_memory = not use_cpu)
+		print('\n','-'*16)
+		print('epoch [%d] init done, lr = %.6f'%(epoch,lr))
+		dataLoader = data.DataLoader(dataset = train_set, shuffle = False, num_workers = default_workers, batch_size = 16 * gpu_num, pin_memory = not use_cpu)
 		for batchid, (_, x, y, z) in enumerate(dataLoader):
 			bsz = x.size(0)
 			opti.zero_grad()
-			x, y, z = Vari(x), Vari(y), Vari(z.squeeze(1))
+			x, y, z = Vari(x), Vari(y), Vari(z.squeeze(1).long())
 			out = Net(x, y)
 			loss = loss_function(out, z)
 			loss.backward()
@@ -160,14 +161,14 @@ def do_train(w = None, p = {}):
 			avg_loss += loss_
 			bcnt += 1
 			if batchid % dispStep == 0:
-				print 'epoch %d [%d] lr: %.6f, batch loss: %.6f, avg loss: %.6f'%(epoch, batchid, lr, loss_, avg_loss/bcnt)
+				print('epoch %d [%d] lr: %.6f, batch loss: %.6f, avg loss: %.6f'%(epoch, batchid, lr, loss_, avg_loss/bcnt))
 			if isnan(loss_) or isinf(loss_) or abs(loss_)>1e6:
-				print '[%d] strange loss result: '%batchid, loss_
+				print('[%d] strange loss result: '%batchid, loss_)
 			else:
 				opti.step()
-		print 'epoch %d evaluating...'%epoch
+		print('epoch %d evaluating...'%epoch)
 		Net.save(snapshot_dir+'__iter%d.pkl'%(epoch+1))
-		print 'model saved.'
+		print('model saved.')
 		acc, mAP = do_eval(p = p)
 		global result_p
 		result_p['final'] = mAP
@@ -177,25 +178,25 @@ def do_train(w = None, p = {}):
 			mod = 'best_%03d.pkl'%int(mAP*1000)
 			result_p['best_model'] = mod
 			Net.save(snapshot_dir+mod)
-			print 'new best!'
+			print('new best!')
 		report()
-		print 'best_it: %s best_acc: %.3f'%(result_p['best_it'], result_p['best_acc'])
+		print('best_it: %s best_acc: %.3f'%(result_p['best_it'], result_p['best_acc']))
 
 	
 
 def do_test(w, p = {}):
 	if w is None or w=='':
-		print 'no model loaded'
+		print('no model loaded')
 		exit(233)
 	elif w.isdigit():
 		Net.load(snapshot_dir+'__iter%d.pkl'%int(w))
-		print 'test load model __iter%d.pkl'%int(w)
+		print('test load model __iter%d.pkl'%int(w))
 	else:
 		Net.load(w)
-		print 'test load model %s' % w
+		print('test load model %s' % w)
 	global test_set
 	Net.eval()
-	dataLoader = data.DataLoader(dataset = test_set, shuffle = False, num_workers = 8, batch_size = 16 * gpu_num, pin_memory = not use_cpu)
+	dataLoader = data.DataLoader(dataset = test_set, shuffle = False, num_workers = default_workers, batch_size = 16 * gpu_num, pin_memory = not use_cpu)
 
 	a = csv.DictReader(open(data_root+'sample_submission.csv'))
 	b = csv.DictWriter(open('test_output.csv', 'w'), a.fieldnames)
@@ -210,7 +211,7 @@ def do_test(w, p = {}):
 			u = {}
 			u['id'] = int(ii)
 			uind = np.argmax(out[i])
-			if random.randint(1,10)==1: print '[%03d]'%ii, utils.clsid2name(uind)
+			if random.randint(1,10)==1: print('[%03d]'%ii, utils.clsid2name(uind))
 			for j in range(99):
 				u[utils.clsid2name(j)] = out[i][j]
 			res.append(u)
@@ -221,8 +222,8 @@ def do_test(w, p = {}):
 
 if __name__=='__main__':
 	global eval_set, train_set, test_set
-	if use_cpu:	print 'USING CPU ONLY'
-	else: print 'USING %d GPU'%gpu_num
+	if use_cpu:	print('USING CPU ONLY')
+	else: print('USING %d GPU'%gpu_num)
 	args = parser.parse_args()
 	if args.param!='':
 		p = json.load(open(args.param))
