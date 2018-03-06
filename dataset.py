@@ -31,7 +31,7 @@ class DataSet(data.Dataset):
 			im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 			im = im.astype('float32')
 			im = cv2.resize(im, (224,224))
-			if train:
+			if False:
 				ims = utils.dataAuc(im)
 			else:
 				ims = [im]
